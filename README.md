@@ -64,7 +64,7 @@ let htmlFuture = templator.get(EmailTemplateInvitationHTML.self, data: templateM
 return htmlFuture.flatMap(to: View.self) { htmlTemplate in
    /// Use template
 }
-
+```
 
 #### Creating templates
 
