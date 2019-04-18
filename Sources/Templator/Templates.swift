@@ -69,8 +69,8 @@ public final class Templates<Database>: Service where Database: SchemaSupporting
     }
     
     /// Setup template management routes (optional)
-    public static func setup(routes router: Router, database: Database.Type, permissionCheck: PermissionCheckClosure? = nil) throws {
-        try RouteController.boot(router: router, database: database, permissionCheck: permissionCheck)
+    public static func setup(routes router: Router, permissionCheck: PermissionCheckClosure? = nil) throws {
+        try RouteController.boot(router: router, database: Database.self, permissionCheck: permissionCheck)
     }
     
     /// Setup services (Leaf for templating and Templates)

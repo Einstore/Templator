@@ -33,34 +33,38 @@ extension AnySource {
     
     /// Install a source
     static func install<Database>(_ database: Database.Type, on req: Request) throws -> EventLoopFuture<String> where Database: SchemaSupporting & MigrationSupporting {
+        func save(template string: String) throws -> EventLoopFuture<String> {
+            let oneFuture: EventLoopFuture<TemplatorData<Database>?> = try TemplatorManager.one(name: name, on: req)
+            return oneFuture.flatMap(to: String.self) { object in
+                guard let object = object else {
+                    let object = TemplatorData<Database>.from(source: self, sourceCode: string)
+                    return object.save(on: req).map(to: String.self) { object in
+                        return string
+                    }
+                }
+                object.source = string
+                return object.save(on: req).map(to: String.self) { object in
+                    return string
+                }
+            }
+        }
         let client: Client = try req.make()
         return client.get(link).flatMap(to: String.self) { response in
             return response.http.body.consumeData(on: req).flatMap(to: String.self) { data in
                 guard let string = String(data: data, encoding: .utf8) else {
                     throw Templates<Database>.Error.invalidTemplateData
                 }
-                let oneFuture: EventLoopFuture<TemplatorData<Database>?> = try TemplatorManager.one(name: name, on: req)
-                return oneFuture.flatMap(to: String.self) { object in
-                    guard let object = object else {
-                        let object = TemplatorData<Database>.from(source: self, sourceCode: string)
-                        return object.save(on: req).map(to: String.self) { object in
-                            return string
-                        }
-                    }
-                    object.source = string
-                    return object.save(on: req).map(to: String.self) { object in
-                        return string
-                    }
-                }
+                return try save(template: string)
             }
-            }.catchMap({ err -> (String) in
+            }.catchFlatMap({ err -> EventLoopFuture<String> in
                 let path = templatesFolderPath.appendingPathComponent(name).appendingPathExtension("leaf")
                 guard FileManager.default.fileExists(atPath: path.path) else {
                     throw Templates<Database>.Error.templateDoesntExist
                 }
                 let content = try String(contentsOf: path)
-                return content
-            })
+                return try save(template: content)
+            }
+        )
     }
     
     /// Path to the templates folder
