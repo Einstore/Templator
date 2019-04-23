@@ -4,6 +4,8 @@
 
 Every body needs to manage some templates from time to time in their application. Templator provides a database agnostic solution to the problem, optionally providing a configurable set of API endpoints to allow user to manage these from any interface.
 
+Default template sources can be hosted remotely on github for example and reloaded/reset at will.
+
 ### Usage
 
 #### Configuration
